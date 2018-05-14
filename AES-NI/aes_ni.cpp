@@ -1,5 +1,5 @@
 /* To compile it:
-	gcc -g -O0 -Wall -msse2 -msse -march=native -maes aes.cpp
+	gcc -g -O0 -Wall -msse2 -msse -march=native -maes aes_ni.cpp
 
 
 */
@@ -27,9 +27,10 @@ int main(int argc, char **argv) {
 	char destination_file[256];
 	char key[256];
 	char enc[256];
+	bool encrypt = FALSE;
 	uint8_t *filerBuffer;
 	uint8_t	*fileOutBuffer = NULL;
-	uint8_t encrypting = 0;
+	//uint8_t encrypt = 0;
 
 	if (argc == 4) {
 		strcpy_s(enc, argv[1]);
@@ -40,7 +41,7 @@ int main(int argc, char **argv) {
 			printf("Parametros invalidos\n aes.exe (-e|-d) origin_file destination_file\n");
 			return 0;
 		}
-		encrypting = (strcmp(enc, "-e") == 0) ? 1 : 0;
+		encrypt = (strcmp(enc, "-e") == 0) ? 1 : 0;
 	}
 	else {
 		printf("Origin file: ");
@@ -50,19 +51,17 @@ int main(int argc, char **argv) {
 		fgets(destination_file, 255, stdin);
 		destination_file[strlen(destination_file) - 1] = 0;
 
-		enc[0] = 0;
-		while (strcmp(enc, "e") && strcmp(enc, "d")) {
-			printf("Encrypt (e) or decrypt (d) ?: ");
-			fgets(enc, 255, stdin);
-			//printf("\nENC: |%s|\n", enc);
+		do {
+			printf("Encrypt (e) or decrypt (d): ");
+			fgets(enc, 9, stdin);
 			enc[strlen(enc) - 1] = 0;
-
-		}
-		encrypting = (strcmp(enc, "e") == 0) ? 1 : 0;
+		} while (strcmp(enc, "e") && strcmp(enc, "d"));
+		if (strcmp(enc, "e") == 0 ) encrypt = TRUE;
+		else encrypt = FALSE;
 	}
 
-	key[0] = 0;
-	while (!validate_key(key)) {
+
+	do {
 		printf("Enter the key: (32 characters long, 0 - 9, a - f or A - F): ");
 		fgets(key, 255, stdin);
 		key[strlen(key) - 1] = 0;
@@ -70,7 +69,7 @@ int main(int argc, char **argv) {
 		if (!validate_key(key)) {
 			printf("Invalid key\n");
 		}
-	}
+	} while (!validate_key(key));
 
 	FILE *fileIn;
 	fopen_s(&fileIn, origin_file, "rb");
@@ -84,35 +83,40 @@ int main(int argc, char **argv) {
 	fopen_s(&fileOut, destination_file, "r");
 	if (fileOut) {
 		printf("Destination file %s already exists\n", destination_file);
-		system("pause");
+		//system("pause");
 		fclose(fileOut);
 		fclose(fileIn);
 		return 0;
 	}
 
+	// Size of the file:
+	// Seek to the end and then ask for the position and store it in size
 	fseek(fileIn, 0L, SEEK_END);
-	int sz = ftell(fileIn);
+	int size = ftell(fileIn);
+	// always return to the first position of the file
+	fseek(fileIn, 0L, SEEK_SET);
 	rewind(fileIn);
 
-	if (!encrypting && (sz % 16) != 0) {
-		printf("Invalid size %d\n", sz);
+	if (!encrypt && (size % 16) != 0) {
+		printf("Invalid size %d\n", size);
 		fclose(fileIn);
 		system("pause");
 		return 0;
 	}
 
-	if (encrypting) {
-		int paddingSize = addPaddingSize(sz) ;
-		int realSize = sz + paddingSize;
+	if (encrypt) {
+		// The encryption will be made by reading and encrypting blocks of 16
+		int extra = 16 - ((size + 1) % 16) + 1;
+		int realSize = size + extra;
 		filerBuffer = (uint8_t*)malloc((realSize) * sizeof(uint8_t));
 
-		fread(filerBuffer, sz, sizeof(uint8_t), fileIn); // Read in the entire file
-		filerBuffer[sz++] = 1;
-		while (sz < realSize) {
-			filerBuffer[sz++] = 0;
+		fread(filerBuffer, size, sizeof(uint8_t), fileIn); // Read in the entire file
+		filerBuffer[size++] = 1;
+		while (size < realSize) {
+			filerBuffer[size++] = 0;
 		}
 
-		int x = realSize + 16;
+		//int x = realSize + 16;
 
 		fileOutBuffer = (uint8_t*)malloc((realSize + 16) * sizeof(uint8_t));
 		for (int i = 0; i < 16; i++) {
@@ -121,10 +125,10 @@ int main(int argc, char **argv) {
 	}
 	else
 	{
-		filerBuffer = (uint8_t*)malloc((sz) * sizeof(uint8_t));
-		fread(filerBuffer, sz, sizeof(uint8_t), fileIn); // Read in the entire file
+		filerBuffer = (uint8_t*)malloc((size) * sizeof(uint8_t));
+		fread(filerBuffer, size, sizeof(uint8_t), fileIn); // Read in the entire file
 
-		fileOutBuffer = (uint8_t*)malloc((sz) * sizeof(uint8_t));
+		fileOutBuffer = (uint8_t*)malloc((size) * sizeof(uint8_t));
 	}
 
 	fclose(fileIn);
@@ -138,21 +142,24 @@ int main(int argc, char **argv) {
 		enc_key[i / 2] += hexToInt(key[i + 1]);
 	}
 
-	pretty_print(enc_key, 16);
-
-	if (encrypting) {
-		encryptAesCBC(enc_key, filerBuffer, fileOutBuffer, sz);
+	if (encrypt) {
+		printf("\n----- Encrypting -----\n");
+		StartCounter();
+		encryptAesCBC(enc_key, filerBuffer, fileOutBuffer, size);
+		printf("\nElapsed time in seconds: %lf ", GetCounter());
 	}
 	else {
-		decryptAesCBC(enc_key, filerBuffer, fileOutBuffer, sz);
+		printf("\n----- Decrypting -----\n");
+		StartCounter();
+		decryptAesCBC(enc_key, filerBuffer, fileOutBuffer, size);
+		printf("\nElapsed time in seconds: %lf ", GetCounter());
 	}
 
 	fileOut = NULL;
 	fopen_s(&fileOut, destination_file, "wb");
 	if (fileOut) {
 
-		int fileOutSize = (encrypting) ? sz + 16 : sizeWithoutPadding(fileOutBuffer, sz - 16);
-		printf("Writting file %d\n", fileOutSize);
+		int fileOutSize = (encrypt) ? size + 16 : sizeWithoutPadding(fileOutBuffer, size - 16);
 
 		fwrite(fileOutBuffer, fileOutSize, sizeof(uint8_t), fileOut);
 		fclose(fileOut);
@@ -161,13 +168,13 @@ int main(int argc, char **argv) {
 		printf("Error writing file");
 	}
 
+	printf("\nSize of origin file: %i", size);
+	printf("\nName of destination file: %s", destination_file);
+		printf("\nSize of destination file: %i\n\n", size);
 
-	printf("Fin\n");
 	system("pause");
 
 	free(filerBuffer);
-	//free(fileOutBuffer);
-
 	return out;
 }
 #endif
