@@ -245,7 +245,7 @@ def decipher_AES(inputs, expandedkey):
 
 	return state
 
-#### main
+# main
 
 def pre_cipher():
 	# Generate initial vector of size 16 in bytes
@@ -265,11 +265,21 @@ def pre_cipher():
 	print(file_name)
 
 	with open(file_name, "rb") as r_file, open("cifrado_"+file_name, "wb") as ciphered:
+		start_time = time.time()
 		while True:
 			line = r_file.read(16)
 
-			if line == "":
+			# print(line)
+			if len(line) == 0:
 				break # end of file
+
+			# If the line length is less than 16 but more than 0, complete with null bytes
+			if len(line) < 16:
+				new_line = bytes(bytearray(line))
+				while len(new_line) < 16:
+					new_line += bytes(bytearray(b'\x00'))
+
+				line = new_line
 
 			inputs = [line.hex()[i:i + 2] for i in range(0, len(line.hex()), 2)]
 			inputs = [int(inputs[i], 16) for i in range(len(inputs))]
@@ -277,6 +287,7 @@ def pre_cipher():
 			ciphered_text = cipher_AES(inputs, expanded)
 			ciphered.write(bytes(ciphered_text))
 
+		print("\n--- %s seconds ---" % (time.time() - start_time))
 		r_file.close()
 		ciphered.close()
 
@@ -293,18 +304,29 @@ def pre_decipher():
 	key_int = [int(key[i], 16) for i in range(len(key))]
 	expanded = expand_key(key_int)
 
-	with open(file_name, "rb") as r_file, open("Des"+file_name, "wb") as deciphered:
+	with open(file_name, "rb") as r_file, open("des"+file_name, "wb") as deciphered:
+		start_time = time.time()
 		while True:
 			line = r_file.read(16)
-
-			if line == "":
+			
+			if len(line) == 0:
 				break # end of file
+
+			# If the line length is less than 16 but more than 0, complete with null bytes
+			if len(line) < 16:
+				new_line = bytes(bytearray(line))
+				while len(new_line) < 16:
+					new_line += bytes(bytearray(b'\x00'))
+
+				line = new_line
+
 			inputs = [line.hex()[i:i + 2] for i in range(0, len(line.hex()), 2)]
 			inputs = [int(inputs[i], 16) for i in range(len(inputs))]
 
 			deciphered_text = decipher_AES(inputs, expanded)
 			deciphered.write(bytes(deciphered_text))
 
+		print("\n--- %s seconds ---" % (time.time() - start_time))
 		r_file.close()
 		deciphered.close()
 
@@ -331,7 +353,8 @@ def main():
 		if int(op) < 0 : raise ValueError
 		functions[int(op)]['function']()
 
-	except(ValueError, IndexError):
+	except(ValueError, IndexError) as e:
+		print(e)
 		pass
 
 if __name__ == '__main__':
