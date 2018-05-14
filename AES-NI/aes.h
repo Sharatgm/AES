@@ -192,14 +192,6 @@ int hexToInt(char c) {
 	return c - 'a' + 10;
 }
 
-char intToHex(uint8_t n) {
-	//printf("(%d)", n);
-	if (n <= 9) {
-		return n + '0';
-	}
-	return (n - 10) + 'a';
-}
-
 int sizeWithoutPadding(const uint8_t *s, int size) {
 	for (int i = size - 1; i >= 0; i--) {
 		if (s[i] == 1) {
@@ -209,7 +201,5 @@ int sizeWithoutPadding(const uint8_t *s, int size) {
 
 	return size;
 }
-
-
 
 #endif

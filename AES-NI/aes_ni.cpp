@@ -1,4 +1,8 @@
-/* To compile it:
+/*
+	Moisés Montaño Copca A01272656
+	Shara Teresa González Mena A01205254
+
+	Compilar:
 	gcc -g -O0 -Wall -msse2 -msse -march=native -maes aes_ni.cpp
 
 
@@ -32,34 +36,22 @@ int main(int argc, char **argv) {
 	uint8_t	*fileOutBuffer = NULL;
 	//uint8_t encrypt = 0;
 
-	if (argc == 4) {
-		strcpy_s(enc, argv[1]);
-		strcpy_s(origin_file, argv[2]);
-		strcpy_s(destination_file, argv[3]);
+	printf("\n ------------ Proyecto Final Seguridad Informática -------------\n\tMoisés Montaño Copca\n\tShara Teresa González Mena\n\n");
 
-		if (strcmp(enc, "-e") && strcmp(enc, "-d")) {
-			printf("Parametros invalidos\n aes.exe (-e|-d) origin_file destination_file\n");
-			return 0;
-		}
-		encrypt = (strcmp(enc, "-e") == 0) ? 1 : 0;
-	}
-	else {
-		printf("Origin file: ");
-		fgets(origin_file, 255, stdin);
-		origin_file[strlen(origin_file) - 1] = 0;
-		printf("Destination file: ");
-		fgets(destination_file, 255, stdin);
-		destination_file[strlen(destination_file) - 1] = 0;
+	printf("Origin file: ");
+	fgets(origin_file, 255, stdin);
+	origin_file[strlen(origin_file) - 1] = 0;
+	printf("Destination file: ");
+	fgets(destination_file, 255, stdin);
+	destination_file[strlen(destination_file) - 1] = 0;
 
-		do {
-			printf("Encrypt (e) or decrypt (d): ");
-			fgets(enc, 9, stdin);
-			enc[strlen(enc) - 1] = 0;
-		} while (strcmp(enc, "e") && strcmp(enc, "d"));
-		if (strcmp(enc, "e") == 0 ) encrypt = TRUE;
-		else encrypt = FALSE;
-	}
-
+	do {
+		printf("Encrypt (e) or decrypt (d): ");
+		fgets(enc, 9, stdin);
+		enc[strlen(enc) - 1] = 0;
+	} while (strcmp(enc, "e") && strcmp(enc, "d"));
+	if (strcmp(enc, "e") == 0 ) encrypt = TRUE;
+	else encrypt = FALSE;
 
 	do {
 		printf("Enter the key: (32 characters long, 0 - 9, a - f or A - F): ");
@@ -105,19 +97,16 @@ int main(int argc, char **argv) {
 	}
 
 	if (encrypt) {
-		// The encryption will be made by reading and encrypting blocks of 16
+		// Leer el archivo en bloques de 16
 		int extra = 16 - ((size + 1) % 16) + 1;
 		int realSize = size + extra;
 		filerBuffer = (uint8_t*)malloc((realSize) * sizeof(uint8_t));
 
-		fread(filerBuffer, size, sizeof(uint8_t), fileIn); // Read in the entire file
+		fread(filerBuffer, size, sizeof(uint8_t), fileIn);
 		filerBuffer[size++] = 1;
 		while (size < realSize) {
 			filerBuffer[size++] = 0;
 		}
-
-		//int x = realSize + 16;
-
 		fileOutBuffer = (uint8_t*)malloc((realSize + 16) * sizeof(uint8_t));
 		for (int i = 0; i < 16; i++) {
 			fileOutBuffer[i] = (uint8_t)0;
@@ -133,7 +122,6 @@ int main(int argc, char **argv) {
 
 	fclose(fileIn);
 
-	// Real encryption
 	uint8_t enc_key[16];
 	int out = 0;
 
@@ -156,12 +144,16 @@ int main(int argc, char **argv) {
 	}
 
 	fileOut = NULL;
+	int destinationFileSize;
 	fopen_s(&fileOut, destination_file, "wb");
 	if (fileOut) {
+		if (encrypt) {
+			destinationFileSize = size + 16;
+		} else  {
+			destinationFileSize = sizeWithoutPadding(fileOutBuffer, size - 16);
+		}
 
-		int fileOutSize = (encrypt) ? size + 16 : sizeWithoutPadding(fileOutBuffer, size - 16);
-
-		fwrite(fileOutBuffer, fileOutSize, sizeof(uint8_t), fileOut);
+		fwrite(fileOutBuffer, destinationFileSize, sizeof(uint8_t), fileOut);
 		fclose(fileOut);
 	}
 	else {
