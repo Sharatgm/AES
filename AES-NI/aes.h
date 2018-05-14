@@ -84,14 +84,12 @@ static void aes128_extended_key(uint8_t *enc_key, __m128i *key_schedule) {
 
 static void aes128_enc(__m128i *key_schedule, uint8_t *plainText, uint8_t *cipherText) {
 	__m128i m = _mm_load_si128((__m128i *) plainText);
-
   DO_ENC_BLOCK(m, key_schedule);
 	_mm_storeu_si128((__m128i *) cipherText, m);
 }
 
 static void aes128_dec(__m128i *key_schedule, uint8_t *cipherText, uint8_t *plainText) {
 	__m128i m = _mm_loadu_si128((__m128i *) cipherText);
-
   DO_DEC_BLOCK(m,key_schedule);
 
 	_mm_storeu_si128((__m128i *) plainText, m);
@@ -123,8 +121,7 @@ double GetCounter()
 
 
 
-void encryptAesCBC(uint8_t enc_key[16], uint8_t *filerBuffer, uint8_t *fileOutBuffer, int size) {
-	//encryptAesCBC(enc_key, filerBuffer, fileOutBuffer, sz);
+void AES_CBC_encrypt(uint8_t enc_key[16], uint8_t *filerBuffer, uint8_t *fileOutBuffer, int size) {
 	__m128i key_schedule[20];
 	aes128_extended_key(enc_key, key_schedule);
 
@@ -144,14 +141,13 @@ void encryptAesCBC(uint8_t enc_key[16], uint8_t *filerBuffer, uint8_t *fileOutBu
 
 }
 
-void decryptAesCBC(uint8_t enc_key[16], uint8_t *filerBuffer, uint8_t *fileOutBuffer, int size) {
+void AES_CBC_decrypt(uint8_t enc_key[16], uint8_t *filerBuffer, uint8_t *fileOutBuffer, int size) {
 	__m128i key_schedule[20];
 	aes128_extended_key(enc_key, key_schedule);
-
-	aes128_extended_key(enc_key, key_schedule);
 	uint8_t iv[16];
-	for (int i = 0; i < 16; i++) iv[i] = fileOutBuffer[i];
-
+	for (int i = 0; i < 16; i++) {
+		iv[i] = fileOutBuffer[i];
+	}
 	for (int i = 0; i < size; i += 16) {
 		aes128_dec(key_schedule, filerBuffer + i + 16, fileOutBuffer + i);
 		for (int j = 0; j < 16; j++) {
@@ -184,11 +180,9 @@ int validate_key(char *pass) {
 }
 
 int hexToInt(char c) {
-	//printf("%c ", c);
 	if (c >= '0' && c <= '9') {
 		return c - '0';
 	}
-
 	return c - 'a' + 10;
 }
 

@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <wmmintrin.h>
 #include <time.h>
+#include <stdint.h>
 
 /* Windows.h -> archivo cabecera específico de Windows para la programación en lenguaje C/C++
 que contiene las declaraciones de todas las funciones de la biblioteca Windows API
@@ -103,6 +104,7 @@ int main(int argc, char **argv) {
 		filerBuffer = (uint8_t*)malloc((realSize) * sizeof(uint8_t));
 
 		fread(filerBuffer, size, sizeof(uint8_t), fileIn);
+		// Llena el último espacio del contenido del archivo con 1 y el resto con 0
 		filerBuffer[size++] = 1;
 		while (size < realSize) {
 			filerBuffer[size++] = 0;
@@ -133,13 +135,13 @@ int main(int argc, char **argv) {
 	if (encrypt) {
 		printf("\n----- Encrypting -----\n");
 		StartCounter();
-		encryptAesCBC(enc_key, filerBuffer, fileOutBuffer, size);
+		AES_CBC_encrypt(enc_key, filerBuffer, fileOutBuffer, size);
 		printf("\nElapsed time in seconds: %lf ", GetCounter());
 	}
 	else {
 		printf("\n----- Decrypting -----\n");
 		StartCounter();
-		decryptAesCBC(enc_key, filerBuffer, fileOutBuffer, size);
+		AES_CBC_decrypt(enc_key, filerBuffer, fileOutBuffer, size);
 		printf("\nElapsed time in seconds: %lf ", GetCounter());
 	}
 
