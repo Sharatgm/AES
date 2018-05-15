@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 	destination_file[strlen(destination_file) - 1] = 0;
 
 	do {
-		printf(" \n0 Encrypt\n 1 decrypt\n>> ");
+		printf(" \n0 Encrypt\n1 decrypt\n>> ");
 		scanf("%i", &op);
 	} while (op != 0 && op != 1);
 	if (op == 0 ) encrypt = TRUE;
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 
 // Descomente esto para dejar que el usuario ingrese la llave
 
-	/*do {
+	do {
 		printf("Enter the key: (32 characters long, 0 - 9, a - f or A - F): ");
 		fgets(key, 255, stdin);
 		key[strlen(key) - 1] = 0;
@@ -64,13 +64,13 @@ int main(int argc, char **argv) {
 			printf("Invalid key\n");
 		}
 	} while (!validate_key(key));
-	*/
+
 
 // Comente esto para dejar que el usuario ingrese la llave.
-	for(int i = 0; i < 32; i++){
+/*	for(int i = 0; i < 32; i++){
 		key[i] = 0;
 	}
-
+*/
 	FILE *fileIn;
 	fopen_s(&fileIn, origin_file, "rb");
 	if (!fileIn) {
