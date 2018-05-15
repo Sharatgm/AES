@@ -31,13 +31,13 @@ int main(int argc, char **argv) {
 	char origin_file[256];
 	char destination_file[256];
 	char key[256];
-	char enc[256];
+	int op;
 	bool encrypt = FALSE;
 	uint8_t *filerBuffer;
 	uint8_t	*fileOutBuffer = NULL;
 	//uint8_t encrypt = 0;
 
-	printf("\n ------------ Proyecto Final Seguridad Informática -------------\n\tMoisés Montaño Copca\n\tShara Teresa González Mena\n\n");
+	printf("\n ------------ Proyecto Final Seguridad Informática -------------\n\tMoises Montano Copca\n\tShara Teresa Gonzalez Mena\n\n");
 
 	printf("Origin file: ");
 	fgets(origin_file, 255, stdin);
@@ -47,14 +47,15 @@ int main(int argc, char **argv) {
 	destination_file[strlen(destination_file) - 1] = 0;
 
 	do {
-		printf("Encrypt (e) or decrypt (d): ");
-		fgets(enc, 9, stdin);
-		enc[strlen(enc) - 1] = 0;
-	} while (strcmp(enc, "e") && strcmp(enc, "d"));
-	if (strcmp(enc, "e") == 0 ) encrypt = TRUE;
+		printf(" \n0 Encrypt\n 1 decrypt\n>> ");
+		scanf("%i", &op);
+	} while (op != 0 && op != 1);
+	if (op == 0 ) encrypt = TRUE;
 	else encrypt = FALSE;
 
-	do {
+// Descomente esto para dejar que el usuario ingrese la llave
+
+	/*do {
 		printf("Enter the key: (32 characters long, 0 - 9, a - f or A - F): ");
 		fgets(key, 255, stdin);
 		key[strlen(key) - 1] = 0;
@@ -63,6 +64,12 @@ int main(int argc, char **argv) {
 			printf("Invalid key\n");
 		}
 	} while (!validate_key(key));
+	*/
+
+// Comente esto para dejar que el usuario ingrese la llave.
+	for(int i = 0; i < 32; i++){
+		key[i] = 0;
+	}
 
 	FILE *fileIn;
 	fopen_s(&fileIn, origin_file, "rb");
@@ -76,7 +83,7 @@ int main(int argc, char **argv) {
 	fopen_s(&fileOut, destination_file, "r");
 	if (fileOut) {
 		printf("Destination file %s already exists\n", destination_file);
-		//system("pause");
+		system("pause");
 		fclose(fileOut);
 		fclose(fileIn);
 		return 0;
